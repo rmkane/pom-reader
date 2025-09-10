@@ -18,10 +18,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -56,7 +56,7 @@ jobs:
         sarif_file: semgrep.sarif
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
@@ -72,10 +72,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -95,7 +95,7 @@ jobs:
         safety check
 
     - name: Upload dependency security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-security-reports
         path: |

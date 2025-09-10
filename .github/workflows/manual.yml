@@ -17,7 +17,7 @@ on:
       python_version:
         description: 'Python version to test'
         required: true
-        default: '3.13'
+        default: '3.10'
         type: choice
         options:
         - '3.10'
@@ -140,7 +140,7 @@ jobs:
         echo "Integration test completed"
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ inputs.test_type }}-${{ inputs.python_version }}

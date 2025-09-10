@@ -15,10 +15,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -38,7 +38,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: htmlcov/
@@ -51,10 +51,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -87,10 +87,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -118,10 +118,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -153,10 +153,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -191,7 +191,7 @@ jobs:
         "
 
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-results

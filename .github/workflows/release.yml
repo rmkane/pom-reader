@@ -23,10 +23,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
@@ -74,7 +74,7 @@ jobs:
         echo '```' >> CHANGELOG.md
 
     - name: Create Release
-      uses: actions/create-release@v1
+      uses: actions/create-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -85,7 +85,7 @@ jobs:
         prerelease: false
 
     - name: Upload Release Assets
-      uses: actions/upload-release-asset@v1
+      uses: actions/upload-release-asset@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -104,10 +104,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
