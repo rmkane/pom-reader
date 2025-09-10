@@ -103,6 +103,16 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
 ]
 
+[tool.pylint.messages_control]
+disable = [
+    "too-many-instance-attributes",  # Data models naturally have many attributes
+    "too-many-locals",              # Complex parsing functions need many variables
+    "c-extension-no-member",        # lxml.etree members not detected by pylint
+    "broad-exception-caught",       # CLI needs to catch general exceptions
+    "redefined-outer-name",         # Minor naming issue
+    "import-outside-toplevel",      # CLI imports yaml when needed
+]
+
 [tool.coverage.run]
 source = ["src/pom_reader"]
 omit = ["*/tests/*"]
