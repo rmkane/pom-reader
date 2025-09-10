@@ -320,7 +320,9 @@ class PomParser:
                 if child.text is not None:
                     # Remove namespace from tag name
                     tag_name = (
-                        child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                        str(child.tag).rsplit("}", maxsplit=1)[-1]
+                        if "}" in str(child.tag)
+                        else str(child.tag)
                     )
                     properties.append(Property(name=tag_name, value=child.text.strip()))
         return properties
