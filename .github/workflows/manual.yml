@@ -78,6 +78,7 @@ jobs:
       if: inputs.test_type == 'performance'
       run: |
         echo "Running performance test with Python ${{ inputs.python_version }}"
+        pip install psutil
 
         # Test parsing performance
         echo "Testing POM parsing performance..."
