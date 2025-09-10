@@ -1,0 +1,160 @@
+name: Manual Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - quick
+        - performance
+        - security
+        - integration
+      python_version:
+        description: 'Python version to test'
+        required: true
+        default: '3.13'
+        type: choice
+        options:
+        - '3.10'
+        - '3.11'
+        - '3.12'
+        - '3.13'
+      log_level:
+        description: 'Log level for testing'
+        required: true
+        default: 'INFO'
+        type: choice
+        options:
+        - DEBUG
+        - INFO
+        - WARNING
+        - ERROR
+        - CRITICAL
+
+jobs:
+  manual-test:
+    name: Manual Test - ${{ inputs.test_type }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ inputs.python_version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Run full test suite
+      if: inputs.test_type == 'full'
+      run: |
+        echo "Running full test suite with Python ${{ inputs.python_version }}"
+        python -m pytest --cov=src/pom_reader --cov-report=html --cov-report=xml -v
+        python -m ruff check src/ tests/
+        python -m mypy src/
+        python -m isort --check-only src/ tests/
+        python -m black --check src/ tests/
+
+    - name: Run quick test
+      if: inputs.test_type == 'quick'
+      run: |
+        echo "Running quick test with Python ${{ inputs.python_version }}"
+        python -m pytest tests/ -v --tb=short
+        python -m pom_reader.cli --help
+        python -m pom_reader.cli --version
+
+    - name: Run performance test
+      if: inputs.test_type == 'performance'
+      run: |
+        echo "Running performance test with Python ${{ inputs.python_version }}"
+
+        # Test parsing performance
+        echo "Testing POM parsing performance..."
+        time python -m pom_reader.cli analyze resources/pom.xml --format json > /dev/null
+
+        # Memory usage test
+        python -c "
+        import psutil
+        import os
+        from pom_reader import PomReader
+
+        process = psutil.Process(os.getpid())
+        initial_memory = process.memory_info().rss / 1024 / 1024
+
+        reader = PomReader()
+        pom = reader.parse_file('resources/pom.xml')
+
+        final_memory = process.memory_info().rss / 1024 / 1024
+        memory_used = final_memory - initial_memory
+
+        print(f'Initial memory: {initial_memory:.2f} MB')
+        print(f'Final memory: {final_memory:.2f} MB')
+        print(f'Memory used: {memory_used:.2f} MB')
+        print(f'Memory usage: {memory_used:.2f} MB')
+        "
+
+    - name: Run security test
+      if: inputs.test_type == 'security'
+      run: |
+        echo "Running security test with Python ${{ inputs.python_version }}"
+        pip install bandit safety
+        bandit -r src/ -f json -o bandit-report.json
+        safety check
+        echo "Security test completed"
+
+    - name: Run integration test
+      if: inputs.test_type == 'integration'
+      run: |
+        echo "Running integration test with Python ${{ inputs.python_version }}"
+
+        # Test all CLI commands
+        python -m pom_reader.cli --help
+        python -m pom_reader.cli --version
+
+        # Test different output formats
+        python -m pom_reader.cli --log-level ${{ inputs.log_level }} analyze resources/pom.xml --format table
+        python -m pom_reader.cli --log-level ${{ inputs.log_level }} analyze resources/pom.xml --format json
+        python -m pom_reader.cli --log-level ${{ inputs.log_level }} analyze resources/pom.xml --format tree
+
+        # Test logging functionality
+        python -m pom_reader.cli --log-level DEBUG analyze resources/pom.xml --format json > /dev/null
+
+        # Test custom log directory
+        mkdir -p /tmp/test-logs
+        python -m pom_reader.cli --log-dir /tmp/test-logs analyze resources/pom.xml --format json > /dev/null
+        ls -la /tmp/test-logs/
+
+        # Test example script
+        python example.py
+
+        echo "Integration test completed"
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ inputs.test_type }}-${{ inputs.python_version }}
+        path: |
+          htmlcov/
+          coverage.xml
+          bandit-report.json
+          /tmp/test-logs/
+
+    - name: Test summary
+      if: always()
+      run: |
+        echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Test Type**: ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python Version**: ${{ inputs.python_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Log Level**: ${{ inputs.log_level }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
