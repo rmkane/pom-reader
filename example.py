@@ -3,20 +3,27 @@
 
 from pathlib import Path
 
+from pom_reader.logging_config import setup_logging
 from pom_reader.reader import PomAnalyzer, PomReader
 
 
 def main() -> None:
     """Demonstrate POM Reader usage."""
+    # Initialize logging
+    logger = setup_logging(level="INFO")
+    logger.info("Starting POM Reader example")
+
     # Initialize the reader
     reader = PomReader()
 
     # Parse the example POM file
     pom_file = Path("resources/pom.xml")
     if not pom_file.exists():
+        logger.error(f"POM file not found: {pom_file}")
         print(f"POM file not found: {pom_file}")
         return
 
+    logger.info(f"Parsing POM file: {pom_file}")
     print("Parsing POM file...")
     pom = reader.parse_file(pom_file)
 

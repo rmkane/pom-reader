@@ -7,6 +7,12 @@ from typing import Any
 
 from lxml import etree
 
+from .logging_config import (
+    get_logger,
+    log_error_with_context,
+    log_function_call,
+    log_parsing_result,
+)
 from .models import (
     Build,
     Dependency,
@@ -24,59 +30,92 @@ class PomParser:
 
     def __init__(self) -> None:
         """Initialize the parser."""
+        self.logger = get_logger(__name__)
         self.namespaces = {
             "m": "http://maven.apache.org/POM/4.0.0",
             "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         }
+        self.logger.debug("PomParser initialized with Maven namespace")
 
     def parse_file(self, file_path: str | Path) -> PomFile:
         """Parse a POM file from the filesystem."""
         path = Path(file_path)
+        log_function_call(self.logger, "parse_file", file_path=str(path))
+
         if not path.exists():
+            self.logger.error(f"POM file not found: {path}")
             raise FileNotFoundError(f"POM file not found: {path}")
 
         try:
+            self.logger.info(f"Parsing POM file: {path}")
             tree = etree.parse(str(path))
             root = tree.getroot()
+            self.logger.debug(f"Successfully parsed XML, root element: {root.tag}")
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
+            log_error_with_context(self.logger, e, f"parsing XML from {path}")
             raise ValueError(f"Invalid XML in POM file {path}: {e}") from e
 
     def parse_string(self, xml_content: str) -> PomFile:
         """Parse a POM from XML string content."""
+        log_function_call(self.logger, "parse_string", content_length=len(xml_content))
+
         try:
+            self.logger.info("Parsing POM from string content")
             root = etree.fromstring(xml_content.encode("utf-8"))
+            self.logger.debug(
+                f"Successfully parsed XML string, root element: {root.tag}"
+            )
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
+            log_error_with_context(self.logger, e, "parsing XML string content")
             raise ValueError(f"Invalid XML content: {e}") from e
 
     def _parse_element(self, root: etree.Element) -> PomFile:
         """Parse the root element of a POM file."""
+        self.logger.debug("Starting POM element parsing")
+
         # Ensure we're dealing with a project element
         if root.tag != "project" and not root.tag.endswith("}project"):
+            self.logger.error(f"Invalid root element: {root.tag}")
             raise ValueError("Root element must be 'project'")
 
         # Parse project information
+        self.logger.info("Parsing project information")
         project = self._parse_project(root)
 
         # Parse dependencies
+        self.logger.info("Parsing dependencies")
         dependencies = self._parse_dependencies(root, "dependencies/dependency")
+        log_parsing_result(self.logger, "dependency", len(dependencies))
+
         dependency_management = self._parse_dependencies(
             root, "dependencyManagement/dependencies/dependency"
         )
+        log_parsing_result(
+            self.logger, "dependency management", len(dependency_management)
+        )
 
         # Parse properties
+        self.logger.info("Parsing properties")
         properties = self._parse_properties(root)
+        log_parsing_result(self.logger, "property", len(properties))
 
         # Parse build section
+        self.logger.info("Parsing build configuration")
         build = self._parse_build(root)
 
         # Parse profiles
+        self.logger.info("Parsing profiles")
         profiles = self._parse_profiles(root)
+        log_parsing_result(self.logger, "profile", len(profiles))
 
         # Parse modules
+        self.logger.info("Parsing modules")
         modules = self._parse_modules(root)
+        log_parsing_result(self.logger, "module", len(modules))
 
+        self.logger.info("POM parsing completed successfully")
         return PomFile(
             project=project,
             dependencies=dependencies,

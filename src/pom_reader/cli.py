@@ -14,14 +14,33 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
+from .logging_config import setup_logging
 from .reader import PomAnalyzer, PomReader
 
 
 @click.group()
 @click.version_option()
-def main() -> None:
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    default="INFO",
+    help="Set the logging level",
+)
+@click.option(
+    "--log-dir",
+    type=click.Path(exists=False, file_okay=False, dir_okay=True, path_type=Path),
+    help="Directory for log files (defaults to ~/.local/logs/pom-reader/)",
+)
+@click.pass_context
+def main(ctx: click.Context, log_level: str, log_dir: Path | None) -> None:
     """POM Reader - A modern Python library for parsing and analyzing Maven POM files."""
-    pass
+    # Initialize logging
+    logger = setup_logging(level=log_level, log_dir=log_dir)
+    logger.info("POM Reader CLI started")
+
+    # Store logger in context for use in commands
+    ctx.ensure_object(dict)
+    ctx.obj["logger"] = logger
 
 
 @main.command()
@@ -34,16 +53,27 @@ def main() -> None:
     help="Output format",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed information")
-def analyze(pom_file: Path, output_format: str, verbose: bool) -> None:
+@click.pass_context
+def analyze(
+    ctx: click.Context, pom_file: Path, output_format: str, verbose: bool
+) -> None:
     """Analyze a POM file and show comprehensive information."""
     console = Console()
+    logger = ctx.obj["logger"]
 
     try:
+        logger.info(f"Starting analysis of POM file: {pom_file}")
+
         # Parse the POM file
         reader = PomReader()
         pom = reader.parse_file(pom_file)
+        logger.info(
+            f"Successfully loaded POM: {pom.project.group_id}:{pom.project.artifact_id}"
+        )
+
         analyzer = PomAnalyzer(pom)
 
+        logger.info(f"Generating analysis in {output_format} format")
         if output_format == "json":
             analysis = analyzer.get_comprehensive_analysis()
             console.print(JSON(json.dumps(analysis, indent=2)))
@@ -52,7 +82,10 @@ def analyze(pom_file: Path, output_format: str, verbose: bool) -> None:
         else:
             _show_table_view(console, pom, analyzer, verbose)
 
+        logger.info("Analysis completed successfully")
+
     except Exception as e:
+        logger.error(f"Analysis failed: {e}", exc_info=True)
         console.print(f"[red]Error analyzing POM file: {e}[/red]")
         sys.exit(1)
 

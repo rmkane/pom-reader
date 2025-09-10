@@ -16,6 +16,11 @@ A modern Python library for parsing and analyzing Maven POM (Project Object Mode
   - [Python API](#python-api)
 - [Development](#development)
   - [Quick Start with Virtual Environment (Recommended)](#quick-start-with-virtual-environment-recommended)
+- [Logging](#logging)
+  - [Log Directory Structure](#log-directory-structure)
+  - [Log Levels](#log-levels)
+  - [CLI Logging Options](#cli-logging-options)
+  - [Log Format](#log-format)
   - [Quick Reference](#quick-reference)
   - [All Available Commands](#all-available-commands)
 - [License](#license)
@@ -25,6 +30,7 @@ A modern Python library for parsing and analyzing Maven POM (Project Object Mode
 - **Type-safe parsing**: Built with Python 3.10+ type hints and dataclasses
 - **Comprehensive analysis**: Extract dependencies, plugins, properties, and more
 - **Rich CLI interface**: Beautiful command-line interface with colored output
+- **Comprehensive logging**: Rolling daily logs with configurable levels and standardized directory structure
 - **Dependency analysis**: Analyze dependency trees, versions, and conflicts
 - **Plugin inspection**: Examine Maven plugins and their configurations
 - **Modern tooling**: Uses lxml for fast XML parsing and Rich for beautiful output
@@ -158,6 +164,46 @@ make format
 
 # Run all checks
 make check
+```
+
+## Logging
+
+POM Reader includes comprehensive logging with rolling daily logs:
+
+### Log Directory Structure
+
+```none
+~/.local/logs/pom-reader/
+├── pom-reader.log          # All logs (30 days retention)
+└── pom-reader-errors.log   # Error logs only (90 days retention)
+```
+
+### Log Levels
+
+- **DEBUG**: Detailed parsing information and function calls
+- **INFO**: General operation information (default)
+- **WARNING**: Warnings and non-critical issues
+- **ERROR**: Errors and exceptions
+- **CRITICAL**: Critical errors
+
+### CLI Logging Options
+
+```bash
+# Set log level
+pom-reader --log-level DEBUG analyze pom.xml
+
+# Custom log directory
+pom-reader --log-dir /path/to/logs analyze pom.xml
+
+# Programmatic usage
+from pom_reader.logging_config import setup_logging
+logger = setup_logging(level="DEBUG")
+```
+
+### Log Format
+
+```none
+2025-09-09 20:51:08 | INFO | pom-reader.parser | parse_file:50 | Parsing POM file: pom.xml
 ```
 
 ### Quick Reference
