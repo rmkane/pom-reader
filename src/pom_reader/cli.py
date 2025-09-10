@@ -305,7 +305,9 @@ def _show_table_view(
 
 
 def _show_tree_view(
-    console: Console, pom: Any, analyzer: PomAnalyzer  # pylint: disable=unused-argument
+    console: Console,
+    pom: Any,
+    analyzer: PomAnalyzer,  # pylint: disable=unused-argument
 ) -> None:
     """Show analysis in tree format."""
     tree = Tree(

@@ -367,7 +367,9 @@ class PomParser:
         )
 
     def _parse_plugins(
-        self, root: etree.Element, xpath: str  # pylint: disable=unused-argument
+        self,
+        root: etree.Element,
+        xpath: str,  # pylint: disable=unused-argument
     ) -> list[Plugin]:
         """Parse plugins from the given xpath."""
         plugins = []
