@@ -62,7 +62,7 @@ def analyze(
     logger = ctx.obj["logger"]
 
     try:
-        logger.info(f"Starting analysis of POM file: {pom_file}")
+        logger.info("Starting analysis of POM file: %s", pom_file)
 
         # Parse the POM file
         reader = PomReader()
@@ -73,7 +73,7 @@ def analyze(
 
         analyzer = PomAnalyzer(pom)
 
-        logger.info(f"Generating analysis in {output_format} format")
+        logger.info("Generating analysis in %s format", output_format)
         if output_format == "json":
             analysis = analyzer.get_comprehensive_analysis()
             console.print(JSON(json.dumps(analysis, indent=2)))
@@ -85,7 +85,7 @@ def analyze(
         logger.info("Analysis completed successfully")
 
     except Exception as e:
-        logger.error(f"Analysis failed: {e}", exc_info=True)
+        logger.error("Analysis failed: %s", e, exc_info=True)
         console.print(f"[red]Error analyzing POM file: {e}[/red]")
         sys.exit(1)
 
@@ -198,7 +198,10 @@ def export(pom_file: Path, output_format: str, output: Path | None) -> None:
 
 
 def _show_table_view(
-    console: Console, pom: Any, analyzer: PomAnalyzer, verbose: bool
+    console: Console,
+    pom: Any,
+    analyzer: PomAnalyzer,
+    verbose: bool,  # pylint: disable=unused-argument
 ) -> None:
     """Show analysis in table format."""
     # Project info
@@ -301,7 +304,9 @@ def _show_table_view(
         console.print(conflict_panel)
 
 
-def _show_tree_view(console: Console, pom: Any, analyzer: PomAnalyzer) -> None:
+def _show_tree_view(
+    console: Console, pom: Any, analyzer: PomAnalyzer  # pylint: disable=unused-argument
+) -> None:
     """Show analysis in tree format."""
     tree = Tree(
         f"[bold blue]{pom.project.group_id}:{pom.project.artifact_id}[/bold blue] "

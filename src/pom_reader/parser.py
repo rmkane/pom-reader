@@ -43,14 +43,14 @@ class PomParser:
         log_function_call(self.logger, "parse_file", file_path=str(path))
 
         if not path.exists():
-            self.logger.error(f"POM file not found: {path}")
+            self.logger.error("POM file not found: %s", path)
             raise FileNotFoundError(f"POM file not found: {path}")
 
         try:
-            self.logger.info(f"Parsing POM file: {path}")
+            self.logger.info("Parsing POM file: %s", path)
             tree = etree.parse(str(path))
             root = tree.getroot()
-            self.logger.debug(f"Successfully parsed XML, root element: {root.tag}")
+            self.logger.debug("Successfully parsed XML, root element: %s", root.tag)
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
             log_error_with_context(self.logger, e, f"parsing XML from {path}")
@@ -64,7 +64,7 @@ class PomParser:
             self.logger.info("Parsing POM from string content")
             root = etree.fromstring(xml_content.encode("utf-8"))
             self.logger.debug(
-                f"Successfully parsed XML string, root element: {root.tag}"
+                "Successfully parsed XML string, root element: %s", root.tag
             )
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
@@ -77,7 +77,7 @@ class PomParser:
 
         # Ensure we're dealing with a project element
         if root.tag != "project" and not root.tag.endswith("}project"):
-            self.logger.error(f"Invalid root element: {root.tag}")
+            self.logger.error("Invalid root element: %s", root.tag)
             raise ValueError("Root element must be 'project'")
 
         # Parse project information
@@ -253,7 +253,11 @@ class PomParser:
             parent=parent,
         )
 
-    def _parse_dependencies(self, root: etree.Element, xpath: str) -> list[Dependency]:
+    def _parse_dependencies(
+        self,
+        root: etree.Element,
+        xpath: str,  # pylint: disable=unused-argument
+    ) -> list[Dependency]:
         """Parse dependencies from the given xpath."""
         dependencies = []
         # Always use namespace for Maven POM elements
@@ -362,7 +366,9 @@ class PomParser:
             plugins=plugins,
         )
 
-    def _parse_plugins(self, root: etree.Element, xpath: str) -> list[Plugin]:
+    def _parse_plugins(
+        self, root: etree.Element, xpath: str  # pylint: disable=unused-argument
+    ) -> list[Plugin]:
         """Parse plugins from the given xpath."""
         plugins = []
         # Always use namespace for Maven POM elements
@@ -569,7 +575,7 @@ class PomParser:
         for child in config_elem:
             # Remove namespace from tag name
             tag_name = (
-                str(child.tag).split("}")[-1]
+                str(child.tag).rsplit("}", maxsplit=1)[-1]
                 if "}" in str(child.tag)
                 else str(child.tag)
             )
@@ -649,9 +655,8 @@ class PomParser:
         if found is not None:
             if found.text is not None:
                 return str(found.text.strip())
-            else:
-                # Element exists but has no text content (like <relativePath/>)
-                return ""
+            # Element exists but has no text content (like <relativePath/>)
+            return ""
 
         if required:
             raise ValueError(f"Required element '{xpath}' not found in {element.tag}")
