@@ -13,6 +13,10 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     steps:
     - name: Checkout code
@@ -49,9 +53,28 @@ jobs:
           p/python
         generateSarif: "1"
 
+    - name: Check SARIF file
+      run: |
+        echo "Checking SARIF file..."
+        if [ -f "semgrep.sarif" ]; then
+          echo "SARIF file exists"
+          ls -la semgrep.sarif
+          if [ -s "semgrep.sarif" ]; then
+            echo "SARIF file is not empty"
+            echo "File size: $(wc -c < semgrep.sarif) bytes"
+          else
+            echo "SARIF file is empty"
+          fi
+        else
+          echo "SARIF file does not exist"
+        fi
+        echo "GitHub event: ${{ github.event_name }}"
+        echo "GitHub ref: ${{ github.ref }}"
+
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
-      if: always() && hashFiles('semgrep.sarif') != ''
+      if: always() && hashFiles('semgrep.sarif') != '' && github.event_name != 'pull_request'
+      continue-on-error: true  # Allow workflow to continue even if SARIF upload fails
       with:
         sarif_file: semgrep.sarif
 
@@ -67,6 +90,10 @@ jobs:
   dependency-scan:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     steps:
     - name: Checkout code
