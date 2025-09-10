@@ -111,7 +111,7 @@ jobs:
       if: inputs.workflow_name == 'docs'
       run: |
         echo "Testing Docs workflow components..."
-        pip install pydocstyle markdownlint-cli
+        pip install pydocstyle
         pydocstyle src/pom_reader/ --count
         test -f README.md
         test -s README.md

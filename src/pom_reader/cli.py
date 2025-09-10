@@ -263,7 +263,8 @@ def _show_table_view(
     if spring_boot_info:
         sb_panel = Panel(
             f"[bold]Spring Boot Project:[/bold] Yes\n"
-            f"[bold]Spring Boot Dependencies:[/bold] {spring_boot_info['spring_boot_dependencies']}\n"
+            f"[bold]Spring Boot Dependencies:[/bold] "
+            f"{spring_boot_info['spring_boot_dependencies']}\n"
             f"[bold]Has Spring Boot Plugin:[/bold] {spring_boot_info['has_spring_boot_plugin']}",
             title="Spring Boot Information",
             border_style="green",
@@ -274,9 +275,12 @@ def _show_table_view(
     java_info = analyzer.get_java_version_info()
     if java_info and any(java_info.values()):
         java_panel = Panel(
-            f"[bold]Java Version Property:[/bold] {java_info.get('java_version_property', 'N/A')}\n"
-            f"[bold]Compiler Source:[/bold] {java_info.get('maven_compiler_source_property', 'N/A')}\n"
-            f"[bold]Compiler Target:[/bold] {java_info.get('maven_compiler_target_property', 'N/A')}",
+            f"[bold]Java Version Property:[/bold] "
+            f"{java_info.get('java_version_property', 'N/A')}\n"
+            f"[bold]Compiler Source:[/bold] "
+            f"{java_info.get('maven_compiler_source_property', 'N/A')}\n"
+            f"[bold]Compiler Target:[/bold] "
+            f"{java_info.get('maven_compiler_target_property', 'N/A')}",
             title="Java Version Information",
             border_style="yellow",
         )
@@ -300,7 +304,8 @@ def _show_table_view(
 def _show_tree_view(console: Console, pom: Any, analyzer: PomAnalyzer) -> None:
     """Show analysis in tree format."""
     tree = Tree(
-        f"[bold blue]{pom.project.group_id}:{pom.project.artifact_id}[/bold blue] v{pom.project.version}"
+        f"[bold blue]{pom.project.group_id}:{pom.project.artifact_id}[/bold blue] "
+        f"v{pom.project.version}"
     )
 
     # Dependencies
@@ -402,5 +407,11 @@ def _show_plugins_table(console: Console, plugins: list) -> None:
     console.print(table)
 
 
+def cli() -> None:
+    """Entry point for the CLI."""
+    main()  # pylint: disable=no-value-for-parameter
+
+
 if __name__ == "__main__":
-    main()
+    # This module is run directly, invoke the Click CLI
+    cli()

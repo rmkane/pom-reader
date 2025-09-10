@@ -50,14 +50,24 @@ jobs:
         python -m pytest --cov=src/pom_reader --cov-report=xml
 
     - name: Test CLI functionality
+      shell: bash
       run: |
         python -m pom_reader.cli --help
         python -m pom_reader.cli --version
-        python -m pom_reader.cli analyze resources/pom.xml --format json > /dev/null
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          python -m pom_reader.cli analyze resources/pom.xml --format json > NUL
+        else
+          python -m pom_reader.cli analyze resources/pom.xml --format json > /dev/null
+        fi
 
     - name: Test logging functionality
+      shell: bash
       run: |
-        python -m pom_reader.cli --log-level DEBUG analyze resources/pom.xml --format table > /dev/null
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          python -m pom_reader.cli --log-level DEBUG analyze resources/pom.xml --format table > NUL
+        else
+          python -m pom_reader.cli --log-level DEBUG analyze resources/pom.xml --format table > /dev/null
+        fi
         # Check if log files were created
         if [ "${{ runner.os }}" = "Windows" ]; then
           if [ -f "$USERPROFILE\.local\logs\pom-reader\pom-reader.log" ]; then

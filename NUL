@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "group_id": "org.example.spring",
+    "artifact_id": "elasticsearch",
+    "version": "0.1.0-SNAPSHOT",
+    "packaging": "jar",
+    "name": "Example 07: Elasticsearch Integration",
+    "description": "Spring Boot application demonstrating Elasticsearch integration with Spring Data 
+Elasticsearch",
+    "url": "",
+    "has_parent": true
+  },
+  "dependency_analysis": {
+    "total_dependencies": 3,
+    "by_scope": {
+      "compile": 2,
+      "provided": 1
+    },
+    "by_group": {
+      "org.springframework.boot": 2,
+      "org.projectlombok": 1
+    },
+    "optional_dependencies": 0,
+    "dependencies_with_version": 0,
+    "dependencies_without_version": 3
+  },
+  "plugin_analysis": {
+    "total_plugins": 2,
+    "by_group": {
+      "org.springframework.boot": 1,
+      "org.apache.maven.plugins": 1
+    },
+    "plugins_with_version": 0,
+    "plugins_without_version": 2,
+    "plugins_with_configuration": 1,
+    "plugins_with_executions": 0
+  },
+  "dependency_conflicts": [],
+  "spring_boot_info": {
+    "is_spring_boot_project": true,
+    "spring_boot_dependencies": 2,
+    "has_spring_boot_plugin": true,
+    "spring_boot_dependencies_list": [
+      {
+        "artifact_id": "spring-boot-starter-web",
+        "version": "",
+        "scope": "compile"
+      },
+      {
+        "artifact_id": "spring-boot-starter-data-elasticsearch",
+        "version": "",
+        "scope": "compile"
+      }
+    ]
+  },
+  "java_version_info": {
+    "java_version_property": "",
+    "maven_compiler_source_property": "",
+    "maven_compiler_target_property": "",
+    "compiler_plugin_source": "",
+    "compiler_plugin_target": ""
+  },
+  "security_info": {
+    "security_dependencies": 0,
+    "security_plugins": 0,
+    "security_dependencies_list": [],
+    "security_plugins_list": []
+  },
+  "build_info": {
+    "has_build_section": true,
+    "source_directory": "",
+    "test_source_directory": "",
+    "output_directory": "",
+    "test_output_directory": "",
+    "final_name": "",
+    "directory": "",
+    "filters_count": 0,
+    "resources_count": 0,
+    "test_resources_count": 0,
+    "plugins_count": 2
+  },
+  "profiles_count": 0,
+  "modules_count": 0,
+  "properties_count": 0
+}
