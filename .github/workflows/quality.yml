@@ -132,8 +132,8 @@ jobs:
 
     - name: Check docstring coverage
       run: |
-        pip install docstring-coverage
-        docstring-coverage src/pom_reader/ --fail-under=80
+        pip install pydocstyle
+        pydocstyle src/pom_reader/ --count
 
     - name: Check for TODO/FIXME comments
       run: |
