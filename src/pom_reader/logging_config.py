@@ -84,9 +84,9 @@ def setup_logging(
     logger.addHandler(error_handler)
 
     # Log the setup
-    logger.info(f"Logging initialized - Level: {level.upper()}")
-    logger.info(f"Log directory: {log_dir}")
-    logger.info(f"Log files: {log_file.name}, {error_log_file.name}")
+    logger.info("Logging initialized - Level: %s", level.upper())
+    logger.info("Log directory: %s", log_dir)
+    logger.info("Log files: %s, %s", log_file.name, error_log_file.name)
 
     return logger
 
@@ -108,16 +108,18 @@ def get_logger(name: str) -> logging.Logger:
 def log_function_call(logger: logging.Logger, func_name: str, **kwargs: Any) -> None:
     """Log function call with parameters."""
     params = ", ".join(f"{k}={v}" for k, v in kwargs.items())
-    logger.debug(f"Calling {func_name}({params})")
+    logger.debug("Calling %s(%s)", func_name, params)
 
 
 def log_parsing_result(logger: logging.Logger, element_type: str, count: int) -> None:
     """Log parsing results."""
-    logger.info(f"Parsed {count} {element_type}(s)")
+    logger.info("Parsed %d %s(s)", count, element_type)
 
 
 def log_error_with_context(
     logger: logging.Logger, error: Exception, context: str
 ) -> None:
     """Log error with additional context."""
-    logger.error(f"Error in {context}: {type(error).__name__}: {error}", exc_info=True)
+    logger.error(
+        "Error in %s: %s: %s", context, type(error).__name__, error, exc_info=True
+    )

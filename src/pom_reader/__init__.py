@@ -10,10 +10,11 @@ from .models import (
     Project,
     Property,
 )
-from .reader import PomReader
+from .reader import PomAnalyzer, PomReader
 
 __version__ = "0.1.0"
 __all__ = [
+    "PomAnalyzer",
     "PomReader",
     "PomFile",
     "Project",

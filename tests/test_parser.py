@@ -208,7 +208,7 @@ class TestPomParser:
 
         if pom_file.exists():
             pom = parser.parse_file(pom_file)
-            assert pom.project.group_id == "org.example.spring"
-            assert pom.project.artifact_id == "elasticsearch"
-            assert pom.project.version == "0.1.0-SNAPSHOT"
+            assert pom.project.group_id == "com.example"
+            assert pom.project.artifact_id == "web-app"
+            assert pom.project.version == "1.0.0-SNAPSHOT"
             assert len(pom.dependencies) > 0

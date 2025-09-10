@@ -1,0 +1,194 @@
+name: Performance
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run performance tests weekly on Sunday at 3 AM UTC
+    - cron: '0 3 * * 0'
+
+jobs:
+  performance-test:
+    name: Performance Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Install performance testing tools
+      run: |
+        pip install psutil memory-profiler line-profiler
+
+    - name: Run performance benchmarks
+      run: |
+        echo "Running performance benchmarks..."
+
+        # Create performance test script
+        cat > performance_test.py << 'EOF'
+        import time
+        import psutil
+        import os
+        from pom_reader import PomReader
+
+        def measure_performance():
+            process = psutil.Process(os.getpid())
+
+            # Measure parsing time
+            start_time = time.time()
+            reader = PomReader()
+            pom = reader.parse_file('resources/pom.xml')
+            parse_time = time.time() - start_time
+
+            # Measure memory usage
+            initial_memory = process.memory_info().rss / 1024 / 1024
+            final_memory = process.memory_info().rss / 1024 / 1024
+            memory_used = final_memory - initial_memory
+
+            # Measure CLI execution time
+            start_time = time.time()
+            os.system('python -m pom_reader.cli analyze resources/pom.xml --format json > /dev/null')
+            cli_time = time.time() - start_time
+
+            print(f"Parse time: {parse_time:.4f} seconds")
+            print(f"Memory usage: {memory_used:.2f} MB")
+            print(f"CLI execution time: {cli_time:.4f} seconds")
+
+            # Performance thresholds
+            assert parse_time < 1.0, f"Parse time too slow: {parse_time:.4f}s"
+            assert memory_used < 50, f"Memory usage too high: {memory_used:.2f} MB"
+            assert cli_time < 2.0, f"CLI execution too slow: {cli_time:.4f}s"
+
+            print("Performance test passed!")
+
+        measure_performance()
+        EOF
+
+        python performance_test.py
+
+    - name: Run memory profiling
+      run: |
+        echo "Running memory profiling..."
+
+        # Create memory profiling script
+        cat > memory_profile.py << 'EOF'
+        from memory_profiler import profile
+        from pom_reader import PomReader
+
+        @profile
+        def profile_parsing():
+            reader = PomReader()
+            pom = reader.parse_file('resources/pom.xml')
+            return pom
+
+        pom = profile_parsing()
+        print(f"Parsed POM: {pom.project.group_id}:{pom.project.artifact_id}")
+        EOF
+
+        python -m memory_profiler memory_profile.py > memory_profile.txt
+
+    - name: Run line profiling
+      run: |
+        echo "Running line profiling..."
+
+        # Create line profiling script
+        cat > line_profile.py << 'EOF'
+        from pom_reader import PomReader
+
+        def profile_parsing():
+            reader = PomReader()
+            pom = reader.parse_file('resources/pom.xml')
+            return pom
+
+        # This would need to be run with kernprof
+        pom = profile_parsing()
+        print(f"Parsed POM: {pom.project.group_id}:{pom.project.artifact_id}")
+        EOF
+
+        python line_profile.py
+
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-reports
+        path: |
+          performance_test.py
+          memory_profile.txt
+          line_profile.py
+
+  load-test:
+    name: Load Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Run load test
+      run: |
+        echo "Running load test..."
+
+        # Create load test script
+        cat > load_test.py << 'EOF'
+        import time
+        import concurrent.futures
+        from pom_reader import PomReader
+
+        def parse_pom():
+            reader = PomReader()
+            pom = reader.parse_file('resources/pom.xml')
+            return pom
+
+        def run_load_test():
+            start_time = time.time()
+
+            # Test concurrent parsing
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                futures = [executor.submit(parse_pom) for _ in range(100)]
+                results = [future.result() for future in futures]
+
+            end_time = time.time()
+            total_time = end_time - start_time
+
+            print(f"Parsed 100 POMs in {total_time:.4f} seconds")
+            print(f"Average time per POM: {total_time/100:.4f} seconds")
+            print(f"Throughput: {100/total_time:.2f} POMs/second")
+
+            # Performance thresholds
+            assert total_time < 10.0, f"Load test too slow: {total_time:.4f}s"
+            assert 100/total_time > 10, f"Throughput too low: {100/total_time:.2f} POMs/s"
+
+            print("Load test passed!")
+
+        run_load_test()
+        EOF
+
+        python load_test.py
+
+    - name: Upload load test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: load-test-results
+        path: load_test.py

@@ -28,6 +28,10 @@ from .models import (
 class PomParser:
     """Parser for Maven POM files with comprehensive error handling."""
 
+    # ============================================================================
+    # INITIALIZATION
+    # ============================================================================
+
     def __init__(self) -> None:
         """Initialize the parser."""
         self.logger = get_logger(__name__)
@@ -37,20 +41,24 @@ class PomParser:
         }
         self.logger.debug("PomParser initialized with Maven namespace")
 
+    # ============================================================================
+    # PUBLIC API METHODS
+    # ============================================================================
+
     def parse_file(self, file_path: str | Path) -> PomFile:
         """Parse a POM file from the filesystem."""
         path = Path(file_path)
         log_function_call(self.logger, "parse_file", file_path=str(path))
 
         if not path.exists():
-            self.logger.error(f"POM file not found: {path}")
+            self.logger.error("POM file not found: %s", path)
             raise FileNotFoundError(f"POM file not found: {path}")
 
         try:
-            self.logger.info(f"Parsing POM file: {path}")
+            self.logger.info("Parsing POM file: %s", path)
             tree = etree.parse(str(path))
             root = tree.getroot()
-            self.logger.debug(f"Successfully parsed XML, root element: {root.tag}")
+            self.logger.debug("Successfully parsed XML, root element: %s", root.tag)
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
             log_error_with_context(self.logger, e, f"parsing XML from {path}")
@@ -64,12 +72,16 @@ class PomParser:
             self.logger.info("Parsing POM from string content")
             root = etree.fromstring(xml_content.encode("utf-8"))
             self.logger.debug(
-                f"Successfully parsed XML string, root element: {root.tag}"
+                "Successfully parsed XML string, root element: %s", root.tag
             )
             return self._parse_element(root)
         except etree.XMLSyntaxError as e:
             log_error_with_context(self.logger, e, "parsing XML string content")
             raise ValueError(f"Invalid XML content: {e}") from e
+
+    # ============================================================================
+    # MAIN PARSING ORCHESTRATION
+    # ============================================================================
 
     def _parse_element(self, root: etree.Element) -> PomFile:
         """Parse the root element of a POM file."""
@@ -77,7 +89,7 @@ class PomParser:
 
         # Ensure we're dealing with a project element
         if root.tag != "project" and not root.tag.endswith("}project"):
-            self.logger.error(f"Invalid root element: {root.tag}")
+            self.logger.error("Invalid root element: %s", root.tag)
             raise ValueError("Root element must be 'project'")
 
         # Parse project information
@@ -139,7 +151,7 @@ class PomParser:
         inception_year = self._get_text(root, "inceptionYear")
 
         # Parse parent
-        parent_elem = root.find("m:parent", self.namespaces)
+        parent_elem = self._find_element(root, "parent")
 
         parent = None
         if parent_elem is not None:
@@ -163,8 +175,8 @@ class PomParser:
 
         organization = None
         if org_elem is not None:
-            org_name = self._get_text(org_elem, "name", default="") or ""
-            org_url = self._get_text(org_elem, "url", default="") or ""
+            org_name = self._get_text(org_elem, "name", default="")
+            org_url = self._get_text(org_elem, "url", default="")
             organization = {
                 "name": org_name,
                 "url": org_url,
@@ -176,11 +188,12 @@ class PomParser:
 
         for license_elem in license_elems:
             license_info = {
-                "name": self._get_text(license_elem, "name", default="") or "",
-                "url": self._get_text(license_elem, "url", default="") or "",
-                "distribution": self._get_text(license_elem, "distribution", default="")
-                or "",
-                "comments": self._get_text(license_elem, "comments", default="") or "",
+                "name": self._get_text(license_elem, "name", default=""),
+                "url": self._get_text(license_elem, "url", default=""),
+                "distribution": self._get_text(
+                    license_elem, "distribution", default=""
+                ),
+                "comments": self._get_text(license_elem, "comments", default=""),
             }
             licenses.append(license_info)
 
@@ -190,26 +203,24 @@ class PomParser:
 
         for dev_elem in dev_elems:
             dev_info: dict[str, str] = {
-                "id": self._get_text(dev_elem, "id", default="") or "",
-                "name": self._get_text(dev_elem, "name", default="") or "",
-                "email": self._get_text(dev_elem, "email", default="") or "",
-                "url": self._get_text(dev_elem, "url", default="") or "",
-                "organization": self._get_text(dev_elem, "organization", default="")
-                or "",
+                "id": self._get_text(dev_elem, "id", default=""),
+                "name": self._get_text(dev_elem, "name", default=""),
+                "email": self._get_text(dev_elem, "email", default=""),
+                "url": self._get_text(dev_elem, "url", default=""),
+                "organization": self._get_text(dev_elem, "organization", default=""),
                 "organization_url": self._get_text(
                     dev_elem, "organizationUrl", default=""
-                )
-                or "",
+                ),
                 "roles": str(
                     ", ".join(
                         [
-                            str(role.text or "")
+                            role.text.strip()
                             for role in dev_elem.findall("roles/role")
                             if role.text
                         ]
                     )
                 ),
-                "timezone": self._get_text(dev_elem, "timezone", default="") or "",
+                "timezone": self._get_text(dev_elem, "timezone", default=""),
                 "properties": str(
                     self._parse_properties_dict(dev_elem.find("properties")) or {}
                 ),
@@ -222,13 +233,12 @@ class PomParser:
         scm = None
         if scm_elem is not None:
             scm = {
-                "connection": self._get_text(scm_elem, "connection", default="") or "",
+                "connection": self._get_text(scm_elem, "connection", default=""),
                 "developer_connection": self._get_text(
                     scm_elem, "developerConnection", default=""
-                )
-                or "",
-                "url": self._get_text(scm_elem, "url", default="") or "",
-                "tag": self._get_text(scm_elem, "tag", default="") or "",
+                ),
+                "url": self._get_text(scm_elem, "url", default=""),
+                "tag": self._get_text(scm_elem, "tag", default=""),
             }
 
         # Ensure required fields are not None
@@ -253,11 +263,14 @@ class PomParser:
             parent=parent,
         )
 
-    def _parse_dependencies(self, root: etree.Element, xpath: str) -> list[Dependency]:
+    def _parse_dependencies(
+        self,
+        root: etree.Element,
+        xpath: str,  # pylint: disable=unused-argument
+    ) -> list[Dependency]:
         """Parse dependencies from the given xpath."""
         dependencies = []
-        # Always use namespace for Maven POM elements
-        dep_elems = root.findall("m:dependencies/m:dependency", self.namespaces)
+        dep_elems = self._find_elements(root, "dependencies/dependency")
 
         for dep_elem in dep_elems:
             if dep_elem is None:
@@ -305,26 +318,59 @@ class PomParser:
 
         return dependencies
 
+    # ============================================================================
+    # UTILITY METHODS
+    # ============================================================================
+
+    def _local_name(self, tag: str) -> str:
+        """Get the local name of a tag."""
+        return str(tag).rsplit("}", maxsplit=1)[-1] if "}" in str(tag) else str(tag)
+
+    def _safe_text(self, element: etree.Element) -> str | None:
+        """Safely extract text from an element, returning None if no text."""
+        return element.text.strip() if element.text is not None else None
+
+    def _find_element(self, parent: etree.Element, xpath: str) -> etree.Element | None:
+        """Find a single element using namespace-aware XPath."""
+        # Add m: prefix to each path component
+        namespaced_xpath = "/".join(f"m:{part}" for part in xpath.split("/"))
+        return parent.find(namespaced_xpath, self.namespaces)
+
+    def _find_elements(self, parent: etree.Element, xpath: str) -> list[etree.Element]:
+        """Find multiple elements using namespace-aware XPath."""
+        # Add m: prefix to each path component
+        namespaced_xpath = "/".join(f"m:{part}" for part in xpath.split("/"))
+        elements = parent.findall(namespaced_xpath, self.namespaces)
+        return [elem for elem in elements if isinstance(elem, etree.Element)]
+
+    def _get_text_or_default(
+        self, element: etree.Element, xpath: str, default: str = ""
+    ) -> str:
+        """Get text content from an element at the given xpath, with a default value."""
+        found = self._find_element(element, xpath)
+        text_content = self._safe_text(found) if found is not None else None
+        return text_content if text_content is not None else default
+
+    # ============================================================================
+    # CORE PARSING METHODS
+    # ============================================================================
+
     def _parse_properties(self, root: etree.Element) -> list[Property]:
         """Parse properties from the POM."""
         properties = []
-        # Always use namespace for Maven POM elements
-        props_elem = root.find("m:properties", self.namespaces)
+        props_elem = self._find_element(root, "properties")
 
         if props_elem is not None:
             for child in props_elem:
-                if child.text is not None:
-                    # Remove namespace from tag name
-                    tag_name = (
-                        child.tag.split("}")[-1] if "}" in child.tag else child.tag
-                    )
-                    properties.append(Property(name=tag_name, value=child.text.strip()))
+                text_content = self._safe_text(child)
+                if text_content is not None:
+                    tag_name = self._local_name(child.tag)
+                    properties.append(Property(name=tag_name, value=text_content))
         return properties
 
     def _parse_build(self, root: etree.Element) -> Build | None:
         """Parse the build section."""
-        # Always use namespace for Maven POM elements
-        build_elem = root.find("m:build", self.namespaces)
+        build_elem = self._find_element(root, "build")
 
         if build_elem is None:
             return None
@@ -339,8 +385,9 @@ class PomParser:
         # Parse filters
         filters = []
         for filter_elem in build_elem.findall("filters/filter"):
-            if filter_elem.text:
-                filters.append(filter_elem.text.strip())
+            text_content = self._safe_text(filter_elem)
+            if text_content is not None:
+                filters.append(text_content)
 
         # Parse resources
         resources = self._parse_resources(build_elem, "resources/resource")
@@ -362,11 +409,14 @@ class PomParser:
             plugins=plugins,
         )
 
-    def _parse_plugins(self, root: etree.Element, xpath: str) -> list[Plugin]:
+    def _parse_plugins(
+        self,
+        root: etree.Element,
+        xpath: str,  # pylint: disable=unused-argument
+    ) -> list[Plugin]:
         """Parse plugins from the given xpath."""
         plugins = []
-        # Always use namespace for Maven POM elements
-        plugin_elems = root.findall("m:plugins/m:plugin", self.namespaces)
+        plugin_elems = self._find_elements(root, "plugins/plugin")
 
         for plugin_elem in plugin_elems:
             if plugin_elem is None:
@@ -487,7 +537,7 @@ class PomParser:
                     final_name=self._get_text(build_elem, "finalName"),
                     directory=self._get_text(build_elem, "directory"),
                     filters=[
-                        f.text or ""
+                        f.text.strip()
                         for f in build_elem.findall("filters/filter")
                         if f.text
                     ],
@@ -513,13 +563,17 @@ class PomParser:
     def _parse_modules(self, root: etree.Element) -> list[str]:
         """Parse modules from the POM."""
         modules = []
-        # Always use namespace for Maven POM elements
-        module_elems = root.findall("m:modules/m:module", self.namespaces)
+        module_elems = self._find_elements(root, "modules/module")
 
         for module_elem in module_elems:
-            if module_elem.text:
-                modules.append(module_elem.text.strip())
+            text_content = self._safe_text(module_elem)
+            if text_content is not None:
+                modules.append(text_content)
         return modules
+
+    # ============================================================================
+    # SPECIALIZED PARSING METHODS
+    # ============================================================================
 
     def _parse_resources(self, root: etree.Element, xpath: str) -> list[dict[str, Any]]:
         """Parse resources from the given xpath."""
@@ -565,17 +619,13 @@ class PomParser:
         if config_elem is None:
             return {}
 
-        config = {}
+        config: dict[str, Any] = {}
         for child in config_elem:
-            # Remove namespace from tag name
-            tag_name = (
-                str(child.tag).split("}")[-1]
-                if "}" in str(child.tag)
-                else str(child.tag)
-            )
+            tag_name = self._local_name(child.tag)
+            text_content = self._safe_text(child)
 
-            if child.text is not None:
-                config[tag_name] = child.text.strip()
+            if text_content is not None:
+                config[tag_name] = text_content
             elif len(child) > 0:
                 # Handle nested configuration
                 config[tag_name] = self._parse_configuration(child)
@@ -583,6 +633,10 @@ class PomParser:
                 config[tag_name] = None
 
         return config
+
+    # ============================================================================
+    # HELPER METHODS
+    # ============================================================================
 
     def _parse_activation_os(
         self, os_elem: etree.Element | None
@@ -592,10 +646,10 @@ class PomParser:
             return None
 
         return {
-            "name": self._get_text(os_elem, "name") or "",
-            "family": self._get_text(os_elem, "family") or "",
-            "arch": self._get_text(os_elem, "arch") or "",
-            "version": self._get_text(os_elem, "version") or "",
+            "name": self._get_text(os_elem, "name", default=""),
+            "family": self._get_text(os_elem, "family", default=""),
+            "arch": self._get_text(os_elem, "arch", default=""),
+            "version": self._get_text(os_elem, "version", default=""),
         }
 
     def _parse_activation_property(
@@ -606,8 +660,8 @@ class PomParser:
             return None
 
         return {
-            "name": self._get_text(prop_elem, "name") or "",
-            "value": self._get_text(prop_elem, "value") or "",
+            "name": self._get_text(prop_elem, "name", default=""),
+            "value": self._get_text(prop_elem, "value", default=""),
         }
 
     def _parse_activation_file(
@@ -618,8 +672,8 @@ class PomParser:
             return None
 
         return {
-            "missing": self._get_text(file_elem, "missing") or "",
-            "exists": self._get_text(file_elem, "exists") or "",
+            "missing": self._get_text(file_elem, "missing", default=""),
+            "exists": self._get_text(file_elem, "exists", default=""),
         }
 
     def _parse_properties_dict(
@@ -649,9 +703,8 @@ class PomParser:
         if found is not None:
             if found.text is not None:
                 return str(found.text.strip())
-            else:
-                # Element exists but has no text content (like <relativePath/>)
-                return ""
+            # Element exists but has no text content (like <relativePath/>)
+            return ""
 
         if required:
             raise ValueError(f"Required element '{xpath}' not found in {element.tag}")
