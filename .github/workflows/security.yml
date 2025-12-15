@@ -79,7 +79,7 @@ jobs:
         sarif_file: semgrep.sarif
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: security-reports
         path: |
@@ -122,7 +122,7 @@ jobs:
         safety check || echo "safety check found issues - see report for details"
 
     - name: Upload dependency security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: dependency-security-reports
         path: |
